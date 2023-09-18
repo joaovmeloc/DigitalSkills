@@ -279,6 +279,9 @@ data_final_area <- cbind(data_area_b, data_area_i, data_area_a) %>%
 
 
 ```
+
+
+
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 
@@ -288,7 +291,7 @@ df_long_area <- gather(data_final_area, key = "Habilidade", value = "Valor", -Cl
 # Crie um gráfico de barras grupadas
 ggplot(df_long_area, aes(x = Habilidade, y = Valor, fill = Classe)) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Área", y = "Nível de Habilidade", fill = "Habilidade") +
+  labs(x = "Habilidade", y = "Nível de Habilidade", fill = "Área") +
   ggtitle("Nível de Habilidade por Área") +
   theme_bw()
 
@@ -297,8 +300,9 @@ data_final_area
 
 ```
 
+https://agenciadenoticias.ibge.gov.br/agencia-noticias/2012-agencia-de-noticias/noticias/37237-de-2010-a-2022-populacao-brasileira-cresce-6-5-e-chega-a-203-1-milhoes
 
-https://www.gov.br/pt-br/noticias/financas-impostos-e-gestao-publica/2023/06/censo-2022-indica-que-o-brasil-totaliza-203-milhoes-de-habitantes#:~:text=%C2%BB%20Em%202022%2C%20as%20concentra%C3%A7%C3%B5es%20urbanas,viviam%20em%20cidades%20desse%20porte.
+
 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
@@ -307,9 +311,9 @@ library(tidyr)
 df_long <- gather(grupo1, key = "Habilidade", value = "Valor", -Classe)
 
 # Crie um gráfico de barras grupadas
-ggplot(df_long, aes(x = Classe, y = Valor, fill = Habilidade)) +
+ggplot(df_long, aes(x = Habilidade, y = Valor, fill = Classe)) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Área", y = "Nível de Habilidade", fill = "Habilidade") +
+  labs(x = "Habilidade", y = "Nível de Habilidade", fill = "Área") +
   ggtitle("Nível de Habilidade por Área") +
   theme_bw()
 
@@ -434,7 +438,7 @@ df_long_classe <- gather(data_final_classe, key = "Habilidade", value = "Valor",
 # Crie um gráfico de barras grupadas
 ggplot(df_long_classe, aes(x = Habilidade, y = Valor, fill = Classe)) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Classe Social", y = "Nível de Habilidade", fill = "Habilidade") +
+  labs(x = "Habilidade", y = "Nível de Habilidade", fill = "Classe Social") +
   ggtitle("Nível de Habilidade por Classe Social") +
   theme_bw()
 
@@ -460,7 +464,7 @@ df_long <- gather(grupo2, key = "Habilidade", value = "Valor", -Classe)
 # Crie um gráfico de barras grupadas
 ggplot(df_long, aes(x = Habilidade, y = Valor, fill = Classe)) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Classe Social", y = "Nível de Habilidade", fill = "Habilidade") +
+  labs(x = "Habilidade", y = "Nível de Habilidade", fill = "Classe Social") +
   ggtitle("Nível de Habilidade por Classe Social") +
   theme_bw()
 
@@ -958,7 +962,7 @@ df_long <- gather(grupo6, key = "Habilidade", value = "Valor", -Classe)
 # Crie um gráfico de barras grupadas
 ggplot(df_long, aes(x = Habilidade, y = Valor, fill = Classe)) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Grau de Instrução", y = "Nível de Habilidade", fill = "Habilidade") +
+  labs(x = "Habilidade", y = "Nível de Habilidade", fill = "Grau de Instrução") +
   ggtitle("Nível de Habilidade por Grau de Instrução") +
   theme_bw()
 
