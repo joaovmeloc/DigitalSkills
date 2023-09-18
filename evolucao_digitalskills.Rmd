@@ -1,0 +1,1262 @@
+---
+title: "Digital Skills - UIT"
+author: "João Victor Melo C. Mendes"
+date: "2023-08-31"
+output: pdf_document
+---
+
+# BANCO DE DADOS MUNDIAL
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ 
+library(readxl)
+library(tidyverse)
+
+dados <- read_excel("C:/Users/Joao victor melo/OneDrive/Área de Trabalho/ANATEL/DIGITAL_SKILLS.xlsx")
+
+dados <- as.data.frame(dados) %>%
+  filter(Sex == "T") %>%
+  filter(Time_Period != 2021)
+
+
+
+```
+
+
+OBS: Foi aplicado um filtro na variável sexo do banco de dados acima, mantendo apenas o "Total" (retirando o Masculino e o Feminino). O motivo do filtro é que, para alguns anos, as habilidades digitais só constavam valores para o genêro agrupadado.
+
+
+## Média do valor valor observado, de 2013 a 2020, para cada região e habilidade digital
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+
+media_valores <- dados %>%
+  group_by(Region, Time_Period, Digital_Skills) %>%
+  summarise(Media_Valor_Observado = mean(Observation_Value))
+
+dados2 <- data.frame(media_valores)
+dados2
+
+```
+
+
+\newpage
+## Gráfico de Evolução Global - Média
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+
+grafico <- ggplot(dados2, aes(x = Time_Period, y = Media_Valor_Observado, color = Digital_Skills)) +
+  geom_line(size = .7) +
+  facet_wrap(~ Region, ncol = 2) +
+  labs(x = "Ano", y = "Média Valor Observado", color = "Habilidade Digital", title = "Gráfico de Evolução - Habilidades Digitais") +
+  theme_minimal()
+
+
+print(grafico)
+
+```
+
+
+
+
+
+\newpage
+
+# BANCO DE DADOS BRASIL
+
+## Tabela - Habilidades Digitais Média 
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+dados <- read_excel("C:/Users/Joao victor melo/OneDrive/Área de Trabalho/ANATEL/DIGITAL_SKILLS.xlsx")
+
+dadosbr <- dados %>%
+  filter(Reference_Area_Name == "Brazil") %>%
+  filter(Sex == "T")
+
+
+# calculando médias
+media_valoresbr <- dadosbr %>%
+  group_by(Time_Period, Digital_Skills) %>%
+  summarise(Media_Valor_Observado = mean(Observation_Value))
+
+dadosbr2 <- data.frame(media_valoresbr)
+
+# tabela 
+
+dadosbr2_transposto <- pivot_wider(dadosbr2, names_from = Digital_Skills, values_from = Media_Valor_Observado)
+as.data.frame(round(dadosbr2_transposto,2))
+```
+
+
+
+
+
+## Gráfico de Evolução Brasil - Média Indicadores
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(ggplot2)
+
+
+graficobr <- ggplot(dadosbr2, aes(x = Time_Period, y = Media_Valor_Observado, group = Digital_Skills, color = Digital_Skills)) +
+  geom_line(size = .7) +
+  labs(x = "Ano", y = "Média Valor Observado", color = "Habilidade Digital", title = "Gráfico de Evolução do Brasil - Habilidades Digitais") +
+  scale_x_continuous(breaks = seq(2013, 2021, by = 2)) +
+  theme_minimal()
+
+
+# Exiba o gráfico
+print(graficobr)
+```
+
+É importante ressaltar que, nos anos de 2019 e 2020, o indicador "copiar ou mover um arquivo ou pasta" da habilidade básica, não foi registrado na base de dados original. 
+
+
+\newpage
+
+# HABILIDADES DIGITAIS BRASIL - 2022
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+dados22 <- read_excel("C:/Users/Joao victor melo/OneDrive/Área de Trabalho/ANATEL/calculo_digitalskills.xlsx", sheet = "ds")
+dados22 <- data.frame(dados22)
+dados22
+
+```
+
+
+## Gráfico 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+# Criar o gráfico de barras
+grafico <- ggplot(data = dados22, aes(x = Digital_Skills, y = Valor_Observado)) +
+  geom_bar(stat = "identity", fill = "lightblue") +
+  geom_text(aes(label = round(Valor_Observado,2)), vjust = -0.3, color = "black") +# Criação das barras
+  labs(x = "Habilidades", y = "Valor Observado", title = "Valores Observados por Habilidade") +  # Rótulos
+  theme_minimal() # Estilo do gráfico
+
+# Exibir o gráfico
+print(grafico)
+
+
+```
+
+## Outras Informações 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+
+infos <- read_excel("C:/Users/Joao victor melo/OneDrive/Área de Trabalho/ANATEL/tic_domicilios_2022_individuos_tabela_total_v1.0.xlsx", sheet = "I1A", skip = 3)
+infos <- as.data.frame(infos)
+infos <- infos[c(1:36),c(1:11)]
+
+colnames(infos) <- c("Grupo", "Classe", "Basic_1", "Basic_2", "Basic_3", "Inter_1",
+                     "Inter_2", "Inter_3", "Inter_4", "Basic_4", "Advanced")
+
+## calculos
+
+pop10 <- 185457244
+indi <- 4
+
+infos2 <- infos %>%
+  group_by(Grupo, Classe) %>%
+  summarise(advanced_ds = round(Advanced*100/(pop10),2))
+
+
+infos3 <- infos %>%
+  group_by(Grupo, Classe) %>%
+  summarise(inter_ds = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(pop10*indi),2))
+
+
+infos4 <- infos %>%
+  group_by(Grupo, Classe) %>%
+  summarise(basic_ds = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(pop10*indi),2))
+
+
+# juntando banco de dados
+
+
+brinfos <- inner_join(infos4,infos3,by="Classe")
+brinfos <- inner_join(brinfos,infos2,by="Classe")
+brinfos <- as.data.frame(brinfos) %>%
+  select(Grupo,Classe,basic_ds,inter_ds,advanced_ds)
+
+#separando por grupos
+
+grupo1 <- filter(brinfos, Grupo == "ÁREA") %>%
+  select(-1)
+grupo2 <- filter(brinfos, Grupo == "CLASSE SOCIAL") %>%
+  select(-1)
+grupo3 <- filter(brinfos, Grupo == "CONDIÇÃO DE ATIVIDADE") %>%
+  select(-1)
+grupo4 <- filter(brinfos, Grupo == "COR OU RAÇA") %>%
+  select(-1)
+grupo5 <- filter(brinfos, Grupo == "FAIXA ETÁRIA") %>%
+  select(-1)
+grupo6 <- filter(brinfos, Grupo == "GRAU DE INSTRUÇÃO") %>%
+  select(-1)
+grupo7 <- filter(brinfos, Grupo == "REGIÃO") %>%
+  select(-1)
+grupo8 <- filter(brinfos, Grupo == "RENDA FAMILIAR") %>%
+  select(-1)
+grupo9 <- filter(brinfos, Grupo == "SEXO") %>%
+  select(-1)
+
+```
+## Gráficos
+
+### Área
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+
+# basic
+
+area_urb_b <- infos %>%
+  filter(Grupo == "ÁREA") %>%
+  filter(Classe == "Urbana") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(113128919*4),2))
+
+area_rur_b <- infos %>%
+  filter(Grupo == "ÁREA") %>%
+  filter(Classe == "Rural") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(72328325*4),2))
+
+
+# intermediate
+
+area_urb_i <- infos %>%
+  filter(Grupo == "ÁREA") %>%
+  filter(Classe == "Urbana") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(113128919*4),2))
+
+area_rur_i <- infos %>%
+  filter(Grupo == "ÁREA") %>%
+  filter(Classe == "Rural") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(72328325*4),2))
+
+
+# advanced
+
+area_urb_a <- infos %>%
+  filter(Grupo == "ÁREA") %>%
+  filter(Classe == "Urbana") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(113128919),2))
+
+area_rur_a <- infos %>%
+  filter(Grupo == "ÁREA") %>%
+  filter(Classe == "Rural") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(72328325),2))
+
+
+# juntando dados
+lista_area_b <- list(area_rur_b, area_urb_b)
+data_area_b <- bind_rows(lista_area_b)
+
+
+
+lista_area_i <- list(area_rur_i, area_urb_i)
+data_area_i <- bind_rows(lista_area_i)
+
+
+
+lista_area_a <- list(area_rur_a, area_urb_a)
+data_area_a <- bind_rows(lista_area_a)
+
+
+data_final_area <- cbind(data_area_b, data_area_i, data_area_a) %>%
+  select(-3,-5)
+
+
+```
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+
+library(tidyr)
+df_long_area <- gather(data_final_area, key = "Habilidade", value = "Valor", -Classe)
+
+# Crie um gráfico de barras grupadas
+ggplot(df_long_area, aes(x = Habilidade, y = Valor, fill = Classe)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Área", y = "Nível de Habilidade", fill = "Habilidade") +
+  ggtitle("Nível de Habilidade por Área") +
+  theme_bw()
+
+data_final_area
+
+
+```
+
+
+https://www.gov.br/pt-br/noticias/financas-impostos-e-gestao-publica/2023/06/censo-2022-indica-que-o-brasil-totaliza-203-milhoes-de-habitantes#:~:text=%C2%BB%20Em%202022%2C%20as%20concentra%C3%A7%C3%B5es%20urbanas,viviam%20em%20cidades%20desse%20porte.
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(tidyr)
+df_long <- gather(grupo1, key = "Habilidade", value = "Valor", -Classe)
+
+# Crie um gráfico de barras grupadas
+ggplot(df_long, aes(x = Classe, y = Valor, fill = Habilidade)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Área", y = "Nível de Habilidade", fill = "Habilidade") +
+  ggtitle("Nível de Habilidade por Área") +
+  theme_bw()
+
+
+grupo1
+```
+
+### Classe Social
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+
+# basic
+
+classe_a_b <- infos %>%
+  filter(Grupo == "CLASSE SOCIAL") %>%
+  filter(Classe == "A") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(5378260*4),2))
+
+classe_b_b <- infos %>%
+  filter(Grupo == "CLASSE SOCIAL") %>%
+  filter(Classe == "B") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(40429679*4),2))
+
+classe_c_b <- infos %>%
+  filter(Grupo == "CLASSE SOCIAL") %>%
+  filter(Classe == "C") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(87906734*4),2))
+
+classe_de_b <- infos %>%
+  filter(Grupo == "CLASSE SOCIAL") %>%
+  filter(Classe == "DE") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(51742571*4),2))
+
+
+
+# intermediate
+
+classe_a_i <- infos %>%
+  filter(Grupo == "CLASSE SOCIAL") %>%
+  filter(Classe == "A") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(5378260*4),2))
+
+classe_b_i <- infos %>%
+  filter(Grupo == "CLASSE SOCIAL") %>%
+  filter(Classe == "B") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(40429679*4),2))
+
+classe_c_i <- infos %>%
+  filter(Grupo == "CLASSE SOCIAL") %>%
+  filter(Classe == "C") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(87906734*4),2))
+
+classe_de_i <- infos %>%
+  filter(Grupo == "CLASSE SOCIAL") %>%
+  filter(Classe == "DE") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(51742571*4),2))
+
+
+# advanced
+
+classe_a_a <- infos %>%
+  filter(Grupo == "CLASSE SOCIAL") %>%
+  filter(Classe == "A") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(5378260),2))
+
+classe_b_a <- infos %>%
+  filter(Grupo == "CLASSE SOCIAL") %>%
+  filter(Classe == "B") %>%
+  group_by(Classe) %>%
+  summarise(advanced= round(Advanced*100/(40429679),2))
+
+classe_c_a <- infos %>%
+  filter(Grupo == "CLASSE SOCIAL") %>%
+  filter(Classe == "C") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(87906734),2))
+
+classe_de_a <- infos %>%
+  filter(Grupo == "CLASSE SOCIAL") %>%
+  filter(Classe == "DE") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(51742571),2))
+
+
+
+# juntando dados
+lista_classe_b <- list(classe_a_b, classe_b_b, classe_c_b, classe_de_b)
+data_classe_b <- bind_rows(lista_classe_b)
+
+
+lista_classe_i <- list(classe_a_i, classe_b_i, classe_c_i, classe_de_i)
+data_classe_i <- bind_rows(lista_classe_i)
+
+
+lista_classe_a <- list(classe_a_a, classe_b_a, classe_c_a, classe_de_a)
+data_classe_a <- bind_rows(lista_classe_a)
+
+data_final_classe <- cbind(data_classe_b, data_classe_i, data_classe_a) %>%
+  select(-3,-5)
+
+
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(tidyr)
+df_long_classe <- gather(data_final_classe, key = "Habilidade", value = "Valor", -Classe)
+
+# Crie um gráfico de barras grupadas
+ggplot(df_long_classe, aes(x = Habilidade, y = Valor, fill = Classe)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Classe Social", y = "Nível de Habilidade", fill = "Habilidade") +
+  ggtitle("Nível de Habilidade por Classe Social") +
+  theme_bw()
+
+data_final_classe
+
+```
+  
+  
+  
+  
+
+A proproção populacional, por classe social, de acordo com o Critério de Classificação Econômica Brasil 2022, está disponível em:   
+https://www.abep.org/criterio-brasil   
+A proporção da população de cada classe social foi utilizada no cálculo das habiliades digitais acima.
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(tidyr)
+df_long <- gather(grupo2, key = "Habilidade", value = "Valor", -Classe)
+
+# Crie um gráfico de barras grupadas
+ggplot(df_long, aes(x = Habilidade, y = Valor, fill = Classe)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Classe Social", y = "Nível de Habilidade", fill = "Habilidade") +
+  ggtitle("Nível de Habilidade por Classe Social") +
+  theme_bw()
+
+grupo2
+
+```
+
+
+### Condição de Atividade
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(tidyr)
+df_long <- gather(grupo3, key = "Habilidade", value = "Valor", -Classe)
+
+# Crie um gráfico de barras grupadas
+ggplot(df_long, aes(x = Classe, y = Valor, fill = Habilidade)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Condição de Atividade", y = "Nível de Habilidade", fill = "Habilidade") +
+  ggtitle("Nível de Habilidade por Condição de Atividade") +
+  theme_bw()
+
+
+grupo3
+```
+
+
+### Cor ou Raça 
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+
+# basic
+
+raca_branca_b <- infos %>%
+  filter(Grupo == "COR OU RAÇA") %>%
+  filter(Classe == "Branca") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(91946615*4),2))
+
+raca_preta_b <- infos %>%
+  filter(Grupo == "COR OU RAÇA") %>%
+  filter(Classe == "Preta") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(22771825*4),2))
+
+raca_parda_b <- infos %>%
+  filter(Grupo == "COR OU RAÇA") %>%
+  filter(Classe == "Parda") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(97317328*4),2))
+
+# intermediate
+
+raca_branca_i <- infos %>%
+  filter(Grupo == "COR OU RAÇA") %>%
+  filter(Classe == "Branca") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(91946615*4),2))
+
+raca_preta_i <- infos %>%
+  filter(Grupo == "COR OU RAÇA") %>%
+  filter(Classe == "Preta") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(22771825*4),2))
+
+raca_parda_i <- infos %>%
+  filter(Grupo == "COR OU RAÇA") %>%
+  filter(Classe == "Parda") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(97317328*4),2))
+
+
+# advanced
+
+raca_branca_a <- infos %>%
+  filter(Grupo == "COR OU RAÇA") %>%
+  filter(Classe == "Branca") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(91946615),2))
+
+raca_preta_a <- infos %>%
+  filter(Grupo == "COR OU RAÇA") %>%
+  filter(Classe == "Preta") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(22771825),2))
+
+raca_parda_a <- infos %>%
+  filter(Grupo == "COR OU RAÇA") %>%
+  filter(Classe == "Parda") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(97317328),2))
+
+
+# juntando dados
+lista_raca_b <- list(raca_branca_b, raca_preta_b, raca_parda_b)
+data_raca_b <- bind_rows(lista_raca_b)
+
+
+
+lista_raca_i <- list(raca_branca_i, raca_preta_i, raca_parda_i)
+data_raca_i <- bind_rows(lista_raca_i)
+
+
+
+lista_raca_a <- list(raca_branca_a, raca_preta_a, raca_parda_a)
+data_raca_a <- bind_rows(lista_raca_a)
+
+
+data_final_raca <- cbind(data_raca_b, data_raca_i, data_raca_a) %>%
+  select(-3,-5)
+
+
+
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(tidyr)
+df_long_raca <- gather(data_final_raca, key = "Habilidade", value = "Valor", -Classe)
+
+# Crie um gráfico de barras grupadas
+ggplot(df_long_raca, aes(x = Habilidade, y = Valor, fill = Classe)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Habilidade", y = "Nível de Habilidade", fill = "Cor ou Raça") +
+  ggtitle("Nível de Habilidade por Cor ou Raça") +
+  theme_bw()
+
+
+data_final_raca
+
+```
+  
+   
+     
+A população residente, por cor ou raça - 2022, está disponível em:   
+https://sidra.ibge.gov.br/tabela/6408   
+O número da população de cada cor ou raça foi utilizado no cálculo das habiliades digitais acima.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+### Cor ou Raça
+
+library(tidyr)
+df_long <- gather(grupo4, key = "Habilidade", value = "Valor", -Classe)
+
+# Crie um gráfico de barras grupadas
+ggplot(df_long, aes(x = Habilidade, y = Valor, fill = Classe)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Habilidade", y = "Nível de Habilidade", fill = "Cor ou Raça") +
+  ggtitle("Nível de Habilidade por Cor ou Raça") +
+  theme_bw()
+
+grupo4
+
+```
+
+
+### Faixa Etária
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+# basic
+
+faixa1015_b <- infos %>%
+  filter(Grupo == "FAIXA ETÁRIA") %>%
+  filter(Classe == "De 10 a 15 anos") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(14576191*4),2))
+
+faixa1624_b <- infos %>%
+  filter(Grupo == "FAIXA ETÁRIA") %>%
+  filter(Classe == "De 16 a 24 anos") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(32045633*4),2))
+
+faixa2534_b <- infos %>%
+  filter(Grupo == "FAIXA ETÁRIA") %>%
+  filter(Classe == "De 25 a 34 anos") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(34136617*4),2))
+
+faixa3544_b <- infos %>%
+  filter(Grupo == "FAIXA ETÁRIA") %>%
+  filter(Classe == "De 35 a 44 anos") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(33381554*4),2))
+
+faixa4559_b <- infos %>%
+  filter(Grupo == "FAIXA ETÁRIA") %>%
+  filter(Classe == "De 45 a 59 anos") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(38823484*4),2))
+
+faixa60_b <- infos %>%
+  filter(Grupo == "FAIXA ETÁRIA") %>%
+  filter(Classe == "De 60 anos ou mais") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(32493765*4),2))
+
+
+
+# intermediate
+
+faixa1015_i <- infos %>%
+  filter(Grupo == "FAIXA ETÁRIA") %>%
+  filter(Classe == "De 10 a 15 anos") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(14576191*4),2))
+
+faixa1624_i <- infos %>%
+  filter(Grupo == "FAIXA ETÁRIA") %>%
+  filter(Classe == "De 16 a 24 anos") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(32045633*4),2))
+
+faixa2534_i <- infos %>%
+  filter(Grupo == "FAIXA ETÁRIA") %>%
+  filter(Classe == "De 25 a 34 anos") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(34136617*4),2))
+
+faixa3544_i <- infos %>%
+  filter(Grupo == "FAIXA ETÁRIA") %>%
+  filter(Classe == "De 35 a 44 anos") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(33381554*4),2))
+
+faixa4559_i <- infos %>%
+  filter(Grupo == "FAIXA ETÁRIA") %>%
+  filter(Classe == "De 45 a 59 anos") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(38823484*4),2))
+
+faixa60_i <- infos %>%
+  filter(Grupo == "FAIXA ETÁRIA") %>%
+  filter(Classe == "De 60 anos ou mais") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(32493765*4),2))
+
+
+# advanced
+
+faixa1015_a <- infos %>%
+  filter(Grupo == "FAIXA ETÁRIA") %>%
+  filter(Classe == "De 10 a 15 anos") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(14576191),2))
+
+faixa1624_a <- infos %>%
+  filter(Grupo == "FAIXA ETÁRIA") %>%
+  filter(Classe == "De 16 a 24 anos") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(32045633),2))
+
+faixa2534_a <- infos %>%
+  filter(Grupo == "FAIXA ETÁRIA") %>%
+  filter(Classe == "De 25 a 34 anos") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(34136617),2))
+
+faixa3544_a <- infos %>%
+  filter(Grupo == "FAIXA ETÁRIA") %>%
+  filter(Classe == "De 35 a 44 anos") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(33381554),2))
+
+faixa4559_a <- infos %>%
+  filter(Grupo == "FAIXA ETÁRIA") %>%
+  filter(Classe == "De 45 a 59 anos") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(38823484),2))
+
+faixa60_a <- infos %>%
+  filter(Grupo == "FAIXA ETÁRIA") %>%
+  filter(Classe == "De 60 anos ou mais") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(32493765),2))
+
+
+
+# juntando dados
+lista_faixaetaria_b <- list(faixa1015_b, faixa1624_b, faixa2534_b, faixa3544_b, faixa4559_b, faixa60_b)
+data_faixaetaria_b <- bind_rows(lista_faixaetaria_b)
+
+
+
+lista_faixaetaria_i <- list(faixa1015_i, faixa1624_i, faixa2534_i, faixa3544_i, faixa4559_i, faixa60_i)
+data_faixaetaria_i <- bind_rows(lista_faixaetaria_i)
+
+
+
+lista_faixaetaria_a <- list(faixa1015_a, faixa1624_a, faixa2534_a, faixa3544_a, faixa4559_a, faixa60_a)
+data_faixaetaria_a <- bind_rows(lista_faixaetaria_a)
+
+
+data_final_faixas <- cbind(data_faixaetaria_b, data_faixaetaria_i, data_faixaetaria_a) %>%
+  select(-3,-5)
+
+
+
+
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(tidyr)
+df_long_faixas <- gather(data_final_faixas, key = "Habilidade", value = "Valor", -Classe)
+
+# Crie um gráfico de barras grupadas
+ggplot(df_long_faixas, aes(x = Habilidade, y = Valor, fill = Classe)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Habilidade", y = "Nível de Habilidade", fill = "Faixa Etária") +
+  ggtitle("Nível de Habilidade por Faixa Etária") +
+  theme_bw()
+
+
+data_final_faixas
+
+```
+
+
+A projeção da população 2022, está disponível em:   
+https://www.ibge.gov.br/estatisticas/sociais/populacao/9109-projecao-da-populacao.html   
+O número da população de cada faixa etária foi utilizado no cálculo das habiliades digitais acima.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+### Faixa Etária
+
+library(tidyr)
+df_long <- gather(grupo5, key = "Habilidade", value = "Valor", -Classe)
+
+# Crie um gráfico de barras grupadas
+ggplot(df_long, aes(x = Habilidade, y = Valor, fill = Classe)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Habilidade", y = "Nível de Habilidade", fill = "Faixa Etária") +
+  ggtitle("Nível de Habilidade por Faixa Etária") +
+  theme_bw()
+
+grupo5
+
+```
+
+
+### Grau de Instrução
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+# basic
+
+grau_analfa_b <- infos %>%
+  filter(Grupo == "GRAU DE INSTRUÇÃO") %>%
+  filter(Classe == "Analfabeto/Educação Infantil") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(53842000*4),2))
+
+grau_fund_b <- infos %>%
+  filter(Grupo == "GRAU DE INSTRUÇÃO") %>%
+  filter(Classe == "Fundamental") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(29489000*4),2))
+
+grau_medio_b <- infos %>%
+  filter(Grupo == "GRAU DE INSTRUÇÃO") %>%
+  filter(Classe == "Médio") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(62029000*4),2))
+
+grau_superior_b <- infos %>%
+  filter(Grupo == "GRAU DE INSTRUÇÃO") %>%
+  filter(Classe == "Superior") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(27707000*4),2))
+
+
+
+# intermediate
+
+grau_analfa_i <- infos %>%
+  filter(Grupo == "GRAU DE INSTRUÇÃO") %>%
+  filter(Classe == "Analfabeto/Educação Infantil") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(53842000*4),2))
+
+grau_fund_i <- infos %>%
+  filter(Grupo == "GRAU DE INSTRUÇÃO") %>%
+  filter(Classe == "Fundamental") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(29489000*4),2))
+
+grau_medio_i <- infos %>%
+  filter(Grupo == "GRAU DE INSTRUÇÃO") %>%
+  filter(Classe == "Médio") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(62029000*4),2))
+
+grau_superior_i <- infos %>%
+  filter(Grupo == "GRAU DE INSTRUÇÃO") %>%
+  filter(Classe == "Superior") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(27707000*4),2))
+
+
+# advanced
+
+grau_analfa_a <- infos %>%
+  filter(Grupo == "GRAU DE INSTRUÇÃO") %>%
+  filter(Classe == "Analfabeto/Educação Infantil") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(53842000*4),2))
+
+grau_fund_a <- infos %>%
+  filter(Grupo == "GRAU DE INSTRUÇÃO") %>%
+  filter(Classe == "Fundamental") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(29489000*4),2))
+
+grau_medio_a <- infos %>%
+  filter(Grupo == "GRAU DE INSTRUÇÃO") %>%
+  filter(Classe == "Médio") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(62029000*4),2))
+
+grau_superior_a <- infos %>%
+  filter(Grupo == "GRAU DE INSTRUÇÃO") %>%
+  filter(Classe == "Superior") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(27707000*4),2))
+
+
+
+# juntando dados
+lista_grau_b <- list(grau_analfa_b, grau_fund_b, grau_medio_b, grau_superior_b)
+data_grau_b <- bind_rows(lista_grau_b)
+
+
+
+lista_grau_i <- list(grau_analfa_i, grau_fund_i, grau_medio_i, grau_superior_i)
+data_grau_i <- bind_rows(lista_grau_i)
+
+
+
+lista_grau_a <- list(grau_analfa_a, grau_fund_a, grau_medio_a, grau_superior_a)
+data_grau_a <- bind_rows(lista_grau_a)
+
+
+data_final_grau <- cbind(data_grau_b, data_grau_i, data_grau_a) %>%
+  select(-3,-5)
+
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(tidyr)
+df_long_grau <- gather(data_final_grau, key = "Habilidade", value = "Valor", -Classe)
+
+# Crie um gráfico de barras grupadas
+ggplot(df_long_grau, aes(x = Habilidade, y = Valor, fill = Classe)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Habilidade", y = "Nível de Habilidade", fill = "Grau de Instrução") +
+  ggtitle("Nível de Habilidade por Grau de Instrução") +
+  theme_bw()
+
+data_final_grau
+
+```
+   
+   
+   
+A população de 15 anos ou mais de idade, analfabetas - 2022, está disponível em:  
+https://sidra.ibge.gov.br/tabela/7111   
+O número da população analfabeta foi utilizado no cálculo das habiliades digitais acima.
+  
+   
+   
+     
+A população de 14 anos ou mais de idade, por nível de instrução - 2022, está disponível em:  
+https://sidra.ibge.gov.br/tabela/7128   
+https://sidra.ibge.gov.br/tabela/7267   
+O número da população de cada nível de instrução foi utilizado no cálculo das habiliades digitais acima.
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(tidyr)
+df_long <- gather(grupo6, key = "Habilidade", value = "Valor", -Classe)
+
+# Crie um gráfico de barras grupadas
+ggplot(df_long, aes(x = Habilidade, y = Valor, fill = Classe)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Grau de Instrução", y = "Nível de Habilidade", fill = "Habilidade") +
+  ggtitle("Nível de Habilidade por Grau de Instrução") +
+  theme_bw()
+
+
+grupo6
+```
+
+
+
+### Região 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+# basic
+
+regiao_se_b <- infos %>%
+  filter(Grupo == "REGIÃO") %>%
+  filter(Classe == "Sudeste") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(78700768*4),2))
+
+regiao_ne_b <- infos %>%
+  filter(Grupo == "REGIÃO") %>%
+  filter(Classe == "Nordeste") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(49729931*4),2))
+
+regiao_s_b <- infos %>%
+  filter(Grupo == "REGIÃO") %>%
+  filter(Classe == "Sul") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(15907400*4),2))
+
+regiao_n_b <- infos %>%
+  filter(Grupo == "REGIÃO") %>%
+  filter(Classe == "Norte") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(26662416*4),2))
+
+regiao_co_b <- infos %>%
+  filter(Grupo == "REGIÃO") %>%
+  filter(Classe == "Centro-Oeste") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(14456729*4),2))
+
+
+
+
+# intermediate
+
+regiao_se_i <- infos %>%
+  filter(Grupo == "REGIÃO") %>%
+  filter(Classe == "Sudeste") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(78700768*4),2))
+
+regiao_ne_i <- infos %>%
+  filter(Grupo == "REGIÃO") %>%
+  filter(Classe == "Nordeste") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(49729931*4),2))
+
+regiao_s_i <- infos %>%
+  filter(Grupo == "REGIÃO") %>%
+  filter(Classe == "Sul") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(15907400*4),2))
+
+regiao_n_i <- infos %>%
+  filter(Grupo == "REGIÃO") %>%
+  filter(Classe == "Norte") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(26662416*4),2))
+
+regiao_co_i <- infos %>%
+  filter(Grupo == "REGIÃO") %>%
+  filter(Classe == "Centro-Oeste") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(14456729*4),2))
+
+
+
+# advanced
+
+regiao_se_a <- infos %>%
+  filter(Grupo == "REGIÃO") %>%
+  filter(Classe == "Sudeste") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(78700768),2))
+
+regiao_ne_a <- infos %>%
+  filter(Grupo == "REGIÃO") %>%
+  filter(Classe == "Nordeste") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(49729931),2))
+
+regiao_s_a <- infos %>%
+  filter(Grupo == "REGIÃO") %>%
+  filter(Classe == "Sul") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(15907400),2))
+
+regiao_n_a <- infos %>%
+  filter(Grupo == "REGIÃO") %>%
+  filter(Classe == "Norte") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(26662416),2))
+
+regiao_co_a <- infos %>%
+  filter(Grupo == "REGIÃO") %>%
+  filter(Classe == "Centro-Oeste") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(14456729),2))
+
+
+# juntando dados
+lista_regioes_b <- list(regiao_co_b, regiao_ne_b, regiao_n_b, regiao_se_b, regiao_s_b)
+data_regioes_b <- bind_rows(lista_regioes_b)
+
+
+
+lista_regioes_i <- list(regiao_co_i, regiao_ne_i, regiao_n_i, regiao_se_i, regiao_s_i)
+data_regioes_i <- bind_rows(lista_regioes_i)
+
+
+
+lista_regioes_a <- list(regiao_co_a, regiao_ne_a, regiao_n_a, regiao_se_a, regiao_s_a)
+data_regioes_a <- bind_rows(lista_regioes_a)
+
+
+data_final_regioes <- cbind(data_regioes_b, data_regioes_i, data_regioes_a) %>%
+  select(-3,-5)
+
+
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(tidyr)
+df_long_regiao <- gather(data_final_regioes, key = "Habilidade", value = "Valor", -Classe)
+
+# Crie um gráfico de barras grupadas
+ggplot(df_long_regiao, aes(x = Habilidade, y = Valor, fill = Classe)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Habilidade", y = "Nível de Habilidade", fill = "Região") +
+  ggtitle("Nível de Habilidade por Região") +
+  theme_bw()
+
+data_final_regioes
+
+```
+
+A projeção da população 2022, está disponível em:  
+https://www.ibge.gov.br/estatisticas/sociais/populacao/9109-projecao-da-populacao.html   
+O número da população de cada região foi utilizado no cálculo das habiliades digitais acima.
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+### Região
+
+library(tidyr)
+df_long <- gather(grupo7, key = "Habilidade", value = "Valor", -Classe)
+
+# Crie um gráfico de barras grupadas
+ggplot(df_long, aes(x = Habilidade, y = Valor, fill = Classe)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Habilidade", y = "Nível de Habilidade", fill = "Região") +
+  ggtitle("Nível de Habilidade por Região") +
+  theme_bw()
+
+grupo7
+
+```
+
+
+### Renda Familiar
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(tidyr)
+df_long <- gather(grupo8, key = "Habilidade", value = "Valor", -Classe)
+
+# Crie um gráfico de barras grupadas
+ggplot(df_long, aes(x = Classe, y = Valor, fill = Habilidade)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Renda Familiar", y = "Nível de Habilidade", fill = "Habilidade") +
+  ggtitle("Nível de Habilidade por Renda Familiar") +
+  theme_bw()
+
+grupo8
+
+```
+
+### Sexo 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+# basic
+
+sexo_m_b <- infos %>%
+  filter(Grupo == "SEXO") %>%
+  filter(Classe == "Masculino") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(89965025*4),2))
+
+sexo_f_b <- infos %>%
+  filter(Grupo == "SEXO") %>%
+  filter(Classe == "Feminino") %>%
+  group_by(Classe) %>%
+  summarise(basic = round((Basic_1+Basic_2+Basic_3+Basic_4)*100/(95492219*4),2))
+
+
+# intermediate
+
+sexo_m_i <- infos %>%
+  filter(Grupo == "SEXO") %>%
+  filter(Classe == "Masculino") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(89965025*4),2))
+
+sexo_f_i <- infos %>%
+  filter(Grupo == "SEXO") %>%
+  filter(Classe == "Feminino") %>%
+  group_by(Classe) %>%
+  summarise(intermediate = round((Inter_1+Inter_2+Inter_3+Inter_4)*100/(95492219*4),2))
+
+
+# advanced
+
+sexo_m_a <- infos %>%
+  filter(Grupo == "SEXO") %>%
+  filter(Classe == "Masculino") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(89965025),2))
+
+sexo_f_a <- infos %>%
+  filter(Grupo == "SEXO") %>%
+  filter(Classe == "Feminino") %>%
+  group_by(Classe) %>%
+  summarise(advanced = round(Advanced*100/(95492219),2))
+
+
+# juntando dados
+lista_sexo_b <- list(sexo_f_b, sexo_m_b)
+data_sexo_b <- bind_rows(lista_sexo_b)
+
+
+
+lista_sexo_i <- list(sexo_f_i, sexo_m_i)
+data_sexo_i <- bind_rows(lista_sexo_i)
+
+
+
+lista_sexo_a <- list(sexo_f_a, sexo_m_a)
+data_sexo_a <- bind_rows(lista_sexo_a)
+
+
+data_final_sexo <- cbind(data_sexo_b, data_sexo_i, data_sexo_a) %>%
+  select(-3,-5)
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(tidyr)
+df_long_sexo <- gather(data_final_sexo, key = "Habilidade", value = "Valor", -Classe)
+
+# Crie um gráfico de barras grupadas
+ggplot(df_long_sexo, aes(x = Habilidade, y = Valor, fill = Classe)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Habilidade", y = "Nível de Habilidade", fill = "Sexo") +
+  ggtitle("Nível de Habilidade por Sexo") +
+  theme_bw()
+
+data_final_sexo
+
+```
+A projeção da população 2022, está disponível em:  
+https://www.ibge.gov.br/estatisticas/sociais/populacao/9109-projecao-da-populacao.html   
+O número da população de cada sexo foi utilizado no cálculo das habiliades digitais acima.
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+### Sexo
+
+library(tidyr)
+df_long <- gather(grupo9, key = "Habilidade", value = "Valor", -Classe)
+
+# Crie um gráfico de barras grupadas
+ggplot(df_long, aes(x = Habilidade, y = Valor, fill = Classe)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Habilidade", y = "Nível de Habilidade", fill = "Sexo") +
+  ggtitle("Nível de Habilidade por Sexo") +
+  theme_bw()
+
+grupo9
+
+```
