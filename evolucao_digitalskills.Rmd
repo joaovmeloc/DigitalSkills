@@ -875,25 +875,25 @@ grau_analfa_a <- infos %>%
   filter(Grupo == "GRAU DE INSTRUÇÃO") %>%
   filter(Classe == "Analfabeto/Educação Infantil") %>%
   group_by(Classe) %>%
-  summarise(advanced = round(Advanced*100/(53842000*4),2))
+  summarise(advanced = round(Advanced*100/(53842000),2))
 
 grau_fund_a <- infos %>%
   filter(Grupo == "GRAU DE INSTRUÇÃO") %>%
   filter(Classe == "Fundamental") %>%
   group_by(Classe) %>%
-  summarise(advanced = round(Advanced*100/(29489000*4),2))
+  summarise(advanced = round(Advanced*100/(29489000),2))
 
 grau_medio_a <- infos %>%
   filter(Grupo == "GRAU DE INSTRUÇÃO") %>%
   filter(Classe == "Médio") %>%
   group_by(Classe) %>%
-  summarise(advanced = round(Advanced*100/(62029000*4),2))
+  summarise(advanced = round(Advanced*100/(62029000),2))
 
 grau_superior_a <- infos %>%
   filter(Grupo == "GRAU DE INSTRUÇÃO") %>%
   filter(Classe == "Superior") %>%
   group_by(Classe) %>%
-  summarise(advanced = round(Advanced*100/(27707000*4),2))
+  summarise(advanced = round(Advanced*100/(27707000),2))
 
 
 
